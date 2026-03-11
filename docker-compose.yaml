@@ -1,6 +1,30 @@
-# Database: use AWS RDS (PostgreSQL). Set DB_HOST to your RDS endpoint in .env.
-
 services:
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm
+    restart: unless-stopped
+    ports:
+      - "${LITELLM_PORT:-4000}:4000"
+    volumes:
+      - ./litellm/config.yaml:/app/config.yaml
+    env_file:
+      - .env
+    environment:
+      # Region required. Credentials: from .env (local) or from EC2 instance role (no keys in .env).
+      - AWS_REGION_NAME=${AWS_REGION_NAME}
+    command: ["--config", "/app/config.yaml"]
+
+  db:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
   pipelines:
     image: ghcr.io/open-webui/pipelines:main
     container_name: pipelines
@@ -11,22 +35,26 @@ services:
     restart: unless-stopped
     environment:
       - PIPELINES_API_KEY=0p3n-w3bu!
+      - HF_TOKEN=${HF_TOKEN}
 
   open-webui:
-    image: ghcr.io/open-webui/open-webui:main
+    image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
     container_name: open-webui
     volumes:
       - open-webui:/app/backend/data
     depends_on:
+      - db
       - pipelines
+      - litellm
     ports:
-      - 3000:8080
+      - ${OPEN_WEBUI_PORT-3000}:8080
     environment:
       # Constructing the connection string from .env variables
       - 'DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}'
-      - 'OPENAI_API_BASE_URL=http://pipelines:9099'
-      - 'OPENAI_API_KEY=0p3n-w3bu!'
-      - 'WEBUI_SECRET_KEY='
+      # Use LiteLLM (AWS Bedrock) as default OpenAI-compatible endpoint; use Admin → Connections to add pipelines if needed
+      - 'OPENAI_API_BASE_URL=http://litellm:4000/v1'
+      - 'WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}'
+      - HF_TOKEN=${HF_TOKEN}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -34,3 +62,4 @@ services:
 volumes:
   open-webui: {}
   pipelines: {}
+  postgres: {}
