@@ -10,7 +10,8 @@ services:
     env_file:
       - .env
     environment:
-      # Region required. Credentials: from .env (local) or from EC2 instance role (no keys in .env).
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION_NAME=${AWS_REGION_NAME}
     command: ["--config", "/app/config.yaml"]
 
