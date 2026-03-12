@@ -10,49 +10,39 @@ model_list:
   # --- Sonnet ---
   - model_name: claude-3-5-sonnet
     litellm_params:
-      model: bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0
-      aws_region_name: os.environ/AWS_REGION_NAME
+      model: bedrock/apac.anthropic.claude-3-5-sonnet-20240620-v1:0
+      aws_region_name: ap-northeast-1
 
   - model_name: claude-3-5-sonnet-v2
     litellm_params:
-      model: bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0
-      aws_region_name: os.environ/AWS_REGION_NAME
-
-  - model_name: claude-3-7-sonnet
-    litellm_params:
-      model: bedrock/anthropic.claude-3-7-sonnet-20250219-v1:0
-      aws_region_name: os.environ/AWS_REGION_NAME
+      model: bedrock/apac.anthropic.claude-3-5-sonnet-20241022-v2:0
+      aws_region_name: ap-northeast-1
 
   - model_name: claude-sonnet-4
     litellm_params:
-      model: bedrock/anthropic.claude-sonnet-4-20250514-v1:0
-      aws_region_name: os.environ/AWS_REGION_NAME
+      model: bedrock/global.anthropic.claude-sonnet-4-20250514-v1:0
+      aws_region_name: us-east-1
 
   - model_name: claude-sonnet-4-5
     litellm_params:
-      model: bedrock/anthropic.claude-sonnet-4-5-20250929-v1:0
-      aws_region_name: os.environ/AWS_REGION_NAME
+      model: bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0
+      aws_region_name: us-east-1
 
   - model_name: claude-3-sonnet
     litellm_params:
-      model: bedrock/anthropic.claude-3-sonnet-20240229-v1:0
-      aws_region_name: os.environ/AWS_REGION_NAME
+      model: bedrock/apac.anthropic.claude-3-sonnet-20240229-v1:W0
+      aws_region_name: ap-northeast-1
 
   # --- Haiku ---
-  - model_name: claude-3-5-haiku
-    litellm_params:
-      model: bedrock/anthropic.claude-3-5-haiku-20241022-v1:0
-      aws_region_name: os.environ/AWS_REGION_NAME
-
   - model_name: claude-haiku-4-5
     litellm_params:
-      model: bedrock/anthropic.claude-haiku-4-5-20251001-v1:0
-      aws_region_name: os.environ/AWS_REGION_NAME
+      model: bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0
+      aws_region_name: us-east-1
 
   - model_name: claude-3-haiku
     litellm_params:
-      model: bedrock/anthropic.claude-3-haiku-20240307-v1:0
-      aws_region_name: os.environ/AWS_REGION_NAME
+      model: bedrock/apac.anthropic.claude-3-haiku-20240307-v1:0
+      aws_region_name: ap-northeast-1
 
 # Optional: use the same Postgres as Open WebUI for LiteLLM keys/teams (uncomment if needed)
 # general_settings:
