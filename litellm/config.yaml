@@ -1,21 +1,16 @@
-# LiteLLM proxy config for AWS Bedrock
-# See: https://docs.litellm.ai/docs/providers/bedrock
+# LiteLLM proxy config: AWS Bedrock + Google Gemini
+# Bedrock: https://docs.litellm.ai/docs/providers/bedrock
+# Gemini:  https://docs.litellm.ai/docs/providers/gemini (uses https://generativelanguage.googleapis.com)
 #
-# Authentication (boto3 default credential chain; no keys in this file):
-#   - EC2: attach an IAM role to the instance → no .env keys needed; use instance profile.
-#   - Local/dev: set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY in .env (or use ~/.aws/credentials).
-# Set AWS_REGION_NAME in .env. Enable models in Bedrock console for your region.
+# Auth (no keys in this file):
+#   AWS: set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION_NAME in .env (or IAM role on EC2).
+#   Gemini: set GEMINI_API_KEY in .env (or inject at runtime e.g. from AWS Secrets). Get key at https://aistudio.google.com
 
 model_list:
   # --- Sonnet ---
   - model_name: claude-3-5-sonnet
     litellm_params:
       model: bedrock/apac.anthropic.claude-3-5-sonnet-20240620-v1:0
-      aws_region_name: ap-northeast-1
-
-  - model_name: claude-3-5-sonnet-v2
-    litellm_params:
-      model: bedrock/apac.anthropic.claude-3-5-sonnet-20241022-v2:0
       aws_region_name: ap-northeast-1
 
   - model_name: claude-sonnet-4
@@ -43,6 +38,27 @@ model_list:
     litellm_params:
       model: bedrock/apac.anthropic.claude-3-haiku-20240307-v1:0
       aws_region_name: ap-northeast-1
+
+  # --- Google Gemini 3 / 3.1 only (Generative Language API: generativelanguage.googleapis.com) ---
+  # Gemini 3 Pro (alias → 3.1 Pro as of Mar 2026)
+  - model_name: gemini-3-pro
+    litellm_params:
+      model: gemini/gemini-3-pro-preview
+
+  # Gemini 3 Flash
+  - model_name: gemini-3-flash
+    litellm_params:
+      model: gemini/gemini-3-flash-preview
+
+  # Gemini 3.1 Pro
+  - model_name: gemini-3.1-pro
+    litellm_params:
+      model: gemini/gemini-3.1-pro-preview
+
+  # Gemini 3.1 Flash (Lite – cost-efficient, fast)
+  - model_name: gemini-3.1-flash-lite
+    litellm_params:
+      model: gemini/gemini-3.1-flash-lite-preview
 
 # Optional: use the same Postgres as Open WebUI for LiteLLM keys/teams (uncomment if needed)
 # general_settings:
