@@ -70,7 +70,7 @@
 
 						{#if feedbackData}
 							{@const messageId = feedbackData?.meta?.message_id}
-							{@const messages = feedbackData?.snapshot?.chat?.chat?.history.messages}
+							{@const messages = feedbackData?.snapshot?.chat?.history?.messages ?? feedbackData?.snapshot?.chat?.chat?.history?.messages}
 
 							{#if messages[messages[messageId]?.parentId]}
 								<div class="flex flex-col w-full mb-2">
@@ -98,7 +98,7 @@
 							<div class=" mb-1 text-xs text-gray-500">{$i18n.t('Rating')}</div>
 
 							<div class="flex-1 text-xs">
-								<span>{selectedFeedback?.data?.details?.rating ?? '-'}</span>
+								<span>{selectedFeedback?.data?.rating ?? selectedFeedback?.data?.details?.rating ?? '-'}</span>
 							</div>
 						</div>
 						<div class="flex flex-col w-full mb-2">

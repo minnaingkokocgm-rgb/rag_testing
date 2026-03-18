@@ -218,6 +218,28 @@ class FeedbackTable:
         with get_db_context(db) as db:
             query = db.query(Feedback, User).join(User, Feedback.user_id == User.id)
 
+            # Optional filters for log view (chat_id, source, date range, model_id, rating)
+            if filter.get("chat_id"):
+                query = query.filter(
+                    Feedback.meta["chat_id"].as_string() == str(filter["chat_id"])
+                )
+            if filter.get("source"):
+                query = query.filter(
+                    Feedback.meta["source"].as_string() == str(filter["source"])
+                )
+            if filter.get("date_from") is not None:
+                query = query.filter(Feedback.created_at >= int(filter["date_from"]))
+            if filter.get("date_to") is not None:
+                query = query.filter(Feedback.created_at <= int(filter["date_to"]))
+            if filter.get("model_id"):
+                query = query.filter(
+                    Feedback.data["model_id"].as_string() == str(filter["model_id"])
+                )
+            if filter.get("rating") is not None and str(filter["rating"]) != "":
+                query = query.filter(
+                    Feedback.data["rating"].as_string() == str(filter["rating"])
+                )
+
             if filter:
                 order_by = filter.get("order_by")
                 direction = filter.get("direction")

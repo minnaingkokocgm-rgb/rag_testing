@@ -5,14 +5,21 @@
 
 	import Leaderboard from './Evaluations/Leaderboard.svelte';
 	import Feedbacks from './Evaluations/Feedbacks.svelte';
+	import JudgeDashboard from './Evaluations/JudgeDashboard.svelte';
+	import RejectResponses from './Evaluations/RejectResponses.svelte';
 
 	const i18n = getContext('i18n');
 
+	const VALID_TABS = ['leaderboard', 'feedback', 'judge', 'reject'];
+
 	let selectedTab;
 	$: {
-		const pathParts = $page.url.pathname.split('/');
+		// Prefer route param (from /admin/evaluations/[tab]) so /admin/evaluations/judge shows Judge
+		const tabFromParams = $page.params?.tab;
+		const pathParts = $page.url.pathname.split('/').filter(Boolean);
 		const tabFromPath = pathParts[pathParts.length - 1];
-		selectedTab = ['leaderboard', 'feedback'].includes(tabFromPath) ? tabFromPath : 'leaderboard';
+		const tab = tabFromParams ?? tabFromPath;
+		selectedTab = VALID_TABS.includes(tab) ? tab : 'leaderboard';
 	}
 
 	$: if (selectedTab) {
@@ -105,6 +112,58 @@
 				</div>
 				<div class=" self-center">{$i18n.t('Feedback')}</div>
 			</a>
+
+			<a
+				id="judge"
+				href="/admin/evaluations/judge"
+				draggable="false"
+				class="px-0.5 py-1 min-w-fit rounded-lg lg:flex-none flex text-right transition select-none {selectedTab ===
+				'judge'
+					? ''
+					: ' text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'}"
+			>
+				<div class=" self-center mr-2">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 16 16"
+						fill="currentColor"
+						class="size-4"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M8 1a.75.75 0 0 1 .75.75V4h2.5a.75.75 0 0 1 0 1.5h-2.5v2.25h2.5a.75.75 0 0 1 0 1.5h-2.5v2.25h2.5a.75.75 0 0 1 0 1.5H8.75V14a.75.75 0 0 1-1.5 0v-1.25H4.75a.75.75 0 0 1 0-1.5h2.5V9H4.75a.75.75 0 0 1 0-1.5h2.5V5.25H4.75a.75.75 0 0 1 0-1.5h2.5V1.75A.75.75 0 0 1 8 1Z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</div>
+				<div class=" self-center">{$i18n.t('Judge')}</div>
+			</a>
+
+			<a
+				id="reject"
+				href="/admin/evaluations/reject"
+				draggable="false"
+				class="px-0.5 py-1 min-w-fit rounded-lg lg:flex-none flex text-right transition select-none {selectedTab ===
+				'reject'
+					? ''
+					: ' text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'}"
+			>
+				<div class=" self-center mr-2">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 16 16"
+						fill="currentColor"
+						class="size-4"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M4.78 4.78a.75.75 0 0 0-1.06 1.06L6.94 8l-3.22 3.22a.75.75 0 1 0 1.06 1.06L8 9.06l3.22 3.22a.75.75 0 1 0 1.06-1.06L9.06 8l3.22-3.22a.75.75 0 0 0-1.06-1.06L8 6.94 4.78 3.72Z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</div>
+				<div class=" self-center">{$i18n.t('Reject')}</div>
+			</a>
 		</div>
 
 		<div class="flex-1 mt-1 lg:mt-0 px-[16px] lg:pr-[16px] lg:pl-0 overflow-y-scroll">
@@ -112,6 +171,10 @@
 				<Leaderboard />
 			{:else if selectedTab === 'feedback'}
 				<Feedbacks />
+			{:else if selectedTab === 'judge'}
+				<JudgeDashboard />
+			{:else if selectedTab === 'reject'}
+				<RejectResponses />
 			{/if}
 		</div>
 	</div>

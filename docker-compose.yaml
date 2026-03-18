@@ -1,21 +1,21 @@
 services:
-  litellm:
-    image: ghcr.io/berriai/litellm:main-latest
-    container_name: litellm
-    restart: unless-stopped
-    ports:
-      - "${LITELLM_PORT:-4000}:4000"
-    volumes:
-      - ./litellm/config.yaml:/app/config.yaml
-    env_file:
-      - .env
-    environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_REGION_NAME=${AWS_REGION_NAME}
-      # Gemini: from .env or inject at runtime (e.g. AWS Secrets); not shown in Open WebUI UI
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-    command: ["--config", "/app/config.yaml"]
+  # litellm:
+  #   image: ghcr.io/berriai/litellm:main-latest
+  #   container_name: litellm
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${LITELLM_PORT:-4000}:4000"
+  #   volumes:
+  #     - ./litellm/config.yaml:/app/config.yaml
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+  #     - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+  #     - AWS_REGION_NAME=${AWS_REGION_NAME}
+  #     # Gemini: from .env or inject at runtime (e.g. AWS Secrets); not shown in Open WebUI UI
+  #     - GEMINI_API_KEY=${GEMINI_API_KEY}
+  #   command: ["--config", "/app/config.yaml"]
 
   pipelines:
     image: ghcr.io/open-webui/pipelines:main
@@ -36,14 +36,14 @@ services:
       - open-webui:/app/backend/data
     depends_on:
       - pipelines
-      - litellm
+      # - litellm
     ports:
       - ${OPEN_WEBUI_PORT-3000}:8080
     environment:
       # Constructing the connection string from .env variables
-      - 'DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}'
+      # - 'DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}'
       # Use LiteLLM (AWS Bedrock) as default OpenAI-compatible endpoint; use Admin → Connections to add pipelines if needed
-      - 'OPENAI_API_BASE_URL=http://litellm:4000/v1'
+      # - 'OPENAI_API_BASE_URL=http://litellm:4000/v1'
       - 'WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}'
       - HF_TOKEN=${HF_TOKEN}
     extra_hosts:

@@ -16,6 +16,7 @@ from open_webui.models.chats import (
     ChatResponse,
     Chats,
     ChatTitleIdResponse,
+    EvaluationChatListItem,
     SharedChatResponse,
     ChatStatsExport,
     AggregateChatStats,
@@ -791,6 +792,74 @@ async def get_all_user_chats_in_db(
 
 
 ############################
+# GetChatsForEvaluation (Judge dashboard: my / by user / all)
+############################
+
+
+@router.get("/for-evaluation", response_model=list[EvaluationChatListItem])
+async def get_chats_for_evaluation(
+    user_id: Optional[str] = None,
+    user=Depends(get_verified_user),
+    db: Session = Depends(get_session),
+):
+    """
+    List chats for the evaluation (Judge) dashboard.
+    - No user_id + admin: return all chats (with user_id in each item).
+    - user_id set + admin: return that user's chats.
+    - No user_id + non-admin: return current user's chats.
+    - user_id set + non-admin: 403.
+    """
+    is_admin = getattr(user, "role", None) == "admin"
+    if user_id:
+        if not is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only admins can list another user's chats.",
+            )
+        # Admin: that user's chats (same shape, add user_id to each)
+        items = Chats.get_chat_title_id_list_by_user_id(
+            user_id,
+            include_archived=False,
+            include_folders=True,
+            include_pinned=True,
+            limit=500,
+            db=db,
+        )
+        return [
+            EvaluationChatListItem(
+                id=c.id,
+                title=c.title,
+                updated_at=c.updated_at,
+                created_at=c.created_at,
+                user_id=user_id,
+            )
+            for c in items
+        ]
+    if is_admin:
+        # Admin: all chats
+        return Chats.get_chat_title_id_list_all(limit=500, db=db)
+    # Own chats
+    items = Chats.get_chat_title_id_list_by_user_id(
+        user.id,
+        include_archived=False,
+        include_folders=True,
+        include_pinned=True,
+        limit=500,
+        db=db,
+    )
+    return [
+        EvaluationChatListItem(
+            id=c.id,
+            title=c.title,
+            updated_at=c.updated_at,
+            created_at=c.created_at,
+            user_id=None,
+        )
+        for c in items
+    ]
+
+
+############################
 # GetArchivedChats
 ############################
 
@@ -955,6 +1024,9 @@ async def get_chat_by_id(
     id: str, user=Depends(get_verified_user), db: Session = Depends(get_session)
 ):
     chat = Chats.get_chat_by_id_and_user_id(id, user.id, db=db)
+    # Admin can load any chat by id (e.g. for LLM judge evaluation)
+    if not chat and getattr(user, "role", None) == "admin":
+        chat = Chats.get_chat_by_id(id, db=db)
 
     if chat:
         return ChatResponse(**chat.model_dump())

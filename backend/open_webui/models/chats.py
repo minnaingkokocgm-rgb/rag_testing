@@ -169,6 +169,16 @@ class ChatTitleIdResponse(BaseModel):
     created_at: int
 
 
+class EvaluationChatListItem(BaseModel):
+    """Chat list item for evaluation dashboard; includes optional user_id when listing all/users."""
+
+    id: str
+    title: str
+    updated_at: int
+    created_at: int
+    user_id: Optional[str] = None
+
+
 class SharedChatResponse(BaseModel):
     id: str
     title: str
@@ -932,6 +942,98 @@ class ChatTable:
                 .all()
             )
             return [ChatModel.model_validate(chat) for chat in all_chats]
+
+    def get_chat_title_id_list_all(
+        self,
+        skip: int = 0,
+        limit: int = 500,
+        db: Optional[Session] = None,
+    ) -> list[EvaluationChatListItem]:
+        """All chats (id, title, updated_at, created_at, user_id) for admin evaluation."""
+        with get_db_context(db) as db:
+            query = (
+                db.query(Chat.id, Chat.title, Chat.updated_at, Chat.created_at, Chat.user_id)
+                .filter_by(archived=False)
+                .order_by(Chat.updated_at.desc())
+            )
+            if skip:
+                query = query.offset(skip)
+            if limit:
+                query = query.limit(limit)
+            rows = query.all()
+            return [
+                EvaluationChatListItem(
+                    id=r[0],
+                    title=r[1] or "",
+                    updated_at=r[2],
+                    created_at=r[3],
+                    user_id=r[4],
+                )
+                for r in rows
+            ]
+
+    def get_reject_response_items(
+        self,
+        user_id: Optional[str] = None,
+        keywords: Optional[list[str]] = None,
+        chat_limit: int = 150,
+        result_limit: int = 300,
+        db: Optional[Session] = None,
+    ) -> list[dict]:
+        """
+        Scan chats for assistant messages that contain any of the given keywords
+        (e.g. policy refusal phrases). No DB flag required — content-based filter.
+        Returns list of { chat_id, message_id, user_content, assistant_content,
+        model_id, chat_title, user_id, updated_at }.
+        """
+        if not keywords:
+            keywords = [
+                "申し訳ありません",
+                "お答えを控え",
+                "その他のご質問にはお答えを控え",
+                "I can only answer",
+                "refrain from answering",
+                "internal security policy",
+                "当社の内部セキュリティポリシー",
+            ]
+        results = []
+        try:
+            if user_id:
+                resp = self.get_chats_by_user_id(
+                    user_id, skip=0, limit=chat_limit, db=db
+                )
+                chats = resp.items if hasattr(resp, "items") else []
+            else:
+                chats = self.get_chats(skip=0, limit=chat_limit, db=db)
+            for chat in chats:
+                if len(results) >= result_limit:
+                    break
+                history = (chat.chat or {}).get("history", {}) or {}
+                messages = history.get("messages", {}) or {}
+                for mid, msg in messages.items():
+                    if len(results) >= result_limit:
+                        break
+                    if (msg or {}).get("role") != "assistant":
+                        continue
+                    content = (msg.get("content") or "") or ""
+                    if not any(kw in content for kw in keywords):
+                        continue
+                    parent_id = msg.get("parentId") or msg.get("parent_id")
+                    parent = (messages.get(parent_id) or {}) if parent_id else {}
+                    user_content = parent.get("content") or ""
+                    results.append({
+                        "chat_id": chat.id,
+                        "message_id": mid,
+                        "user_content": user_content,
+                        "assistant_content": content,
+                        "model_id": msg.get("model") or "",
+                        "chat_title": getattr(chat, "title", None) or "",
+                        "user_id": getattr(chat, "user_id", None) or "",
+                        "updated_at": getattr(chat, "updated_at", 0) or 0,
+                    })
+        except Exception:
+            pass
+        return results
 
     def get_chat_by_id(
         self, id: str, db: Optional[Session] = None

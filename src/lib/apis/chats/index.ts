@@ -603,6 +603,80 @@ export const getChatListByTagName = async (token: string = '', tagName: string) 
 	}));
 };
 
+export type EvaluationChatListItem = {
+	id: string;
+	title: string;
+	updated_at: number;
+	created_at: number;
+	user_id?: string | null;
+};
+
+/**
+ * List chats for the evaluation (Judge) dashboard.
+ * - No user_id + admin: all chats (items include user_id).
+ * - user_id set + admin: that user's chats.
+ * - No user_id + non-admin: current user's chats.
+ */
+export const getChatsForEvaluation = async (
+	token: string = '',
+	userId?: string | null
+): Promise<EvaluationChatListItem[]> => {
+	let error = null;
+	const searchParams = new URLSearchParams();
+	if (userId != null && userId !== '') {
+		searchParams.append('user_id', userId);
+	}
+	const url = `${WEBUI_API_BASE_URL}/chats/for-evaluation${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+	const res = await fetch(url, {
+		method: 'GET',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			...(token && { authorization: `Bearer ${token}` })
+		}
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.then((json) => json)
+		.catch((err) => {
+			error = err?.detail ?? err;
+			console.error(err);
+			return null;
+		});
+	if (error) throw error;
+	return Array.isArray(res) ? res : [];
+};
+
+/** Admin only: list users (id, name) for evaluation "By user" selector. */
+export const getUsersForAdmin = async (
+	token: string = ''
+): Promise<{ id: string; name: string }[]> => {
+	let error = null;
+	const res = await fetch(`${WEBUI_API_BASE_URL}/users/all`, {
+		method: 'GET',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			...(token && { authorization: `Bearer ${token}` })
+		}
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.then((json) => json)
+		.catch((err) => {
+			error = err?.detail ?? err;
+			console.error(err);
+			return null;
+		});
+	if (error) throw error;
+	const users = res?.users ?? [];
+	return Array.isArray(users) ? users.map((u: { id?: string; name?: string }) => ({ id: u?.id ?? '', name: u?.name ?? '' })) : [];
+};
+
 export const getChatById = async (token: string, id: string) => {
 	let error = null;
 
